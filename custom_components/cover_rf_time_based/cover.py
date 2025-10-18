@@ -96,22 +96,16 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     }
 )
 
-POSITION_SCHEMA = vol.Schema(
-    {
-        vol.Required(ATTR_ENTITY_ID): cv.entity_ids,
-        vol.Required(ATTR_POSITION): cv.positive_int,
-        vol.Optional(ATTR_CONFIDENT, default=False): cv.boolean,
-        vol.Optional(ATTR_POSITION_TYPE, default=ATTR_POSITION_TYPE_TARGET): cv.string
-    }
-)
+# Schema dictionaries (without entity_id - cv.make_entity_service_schema adds that)
+POSITION_SCHEMA = {
+    vol.Required(ATTR_POSITION): cv.positive_int,
+    vol.Optional(ATTR_CONFIDENT, default=False): cv.boolean,
+    vol.Optional(ATTR_POSITION_TYPE, default=ATTR_POSITION_TYPE_TARGET): cv.string
+}
 
-
-ACTION_SCHEMA = vol.Schema(
-    {
-        vol.Required(ATTR_ENTITY_ID): cv.entity_ids,
-        vol.Required(ATTR_ACTION): cv.string
-    }
-)
+ACTION_SCHEMA = {
+    vol.Required(ATTR_ACTION): cv.string
+}
 
 
 DOMAIN = "cover_rf_time_based"
@@ -154,14 +148,12 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
 
     platform = entity_platform.current_platform.get()
 
-#    platform.async_register_entity_service(
-#        SERVICE_SET_KNOWN_POSITION, POSITION_SCHEMA, "set_known_position"
-#    )
+    # Guard against platform not being available during setup
+    if platform is None:
+        _LOGGER.error("Unable to get current platform for service registration")
+        return
 
-#    platform.async_register_entity_service(
-#        SERVICE_SET_KNOWN_ACTION, ACTION_SCHEMA, "set_known_action"
-#    )
-
+    # Register entity services with proper schema wrapping for HA 2025.10+ compatibility
     platform.async_register_entity_service(
         SERVICE_SET_KNOWN_POSITION,
         cv.make_entity_service_schema(POSITION_SCHEMA),
@@ -248,7 +240,7 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
             return True
         else:
             self._availability_template.hass = self.hass
-            return self._availability_template.async_render()
+            return bool(self._availability_template.async_render())
 
     @property
     def name(self):
