@@ -132,17 +132,17 @@ def devices_from_config(domain_config):
         always_confident = config.pop(CONF_ALWAYS_CONFIDENT)
         device_class = config.pop(CONF_DEVICE_CLASS)
         availability_template = config.pop(CONF_AVAILABILITY_TPL, None)
-        device = CoverTimeBased(device_id, 
-                                name, 
-                                travel_time_down, 
-                                travel_time_up, 
-                                open_script_entity_id, 
-                                close_script_entity_id, 
-                                stop_script_entity_id, 
-                                cover_entity_id, 
-                                send_stop_at_ends, 
-                                always_confident, 
-                                device_class, 
+        device = CoverTimeBased(device_id,
+                                name,
+                                travel_time_down,
+                                travel_time_up,
+                                open_script_entity_id,
+                                close_script_entity_id,
+                                stop_script_entity_id,
+                                cover_entity_id,
+                                send_stop_at_ends,
+                                always_confident,
+                                device_class,
                                 availability_template)
         devices.append(device)
     return devices
@@ -154,34 +154,47 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
 
     platform = entity_platform.current_platform.get()
 
+#    platform.async_register_entity_service(
+#        SERVICE_SET_KNOWN_POSITION, POSITION_SCHEMA, "set_known_position"
+#    )
+
+#    platform.async_register_entity_service(
+#        SERVICE_SET_KNOWN_ACTION, ACTION_SCHEMA, "set_known_action"
+#    )
+
     platform.async_register_entity_service(
-        SERVICE_SET_KNOWN_POSITION, POSITION_SCHEMA, "set_known_position"
+        SERVICE_SET_KNOWN_POSITION,
+        cv.make_entity_service_schema(POSITION_SCHEMA),
+        "set_known_position",
     )
 
     platform.async_register_entity_service(
-        SERVICE_SET_KNOWN_ACTION, ACTION_SCHEMA, "set_known_action"
+        SERVICE_SET_KNOWN_ACTION,
+        cv.make_entity_service_schema(ACTION_SCHEMA),
+        "set_known_action",
     )
+
 
 
 class CoverTimeBased(CoverEntity, RestoreEntity):
-    def __init__(self, 
-                 device_id, 
-                 name, 
-                 travel_time_down, 
-                 travel_time_up, 
-                 open_script_entity_id, 
-                 close_script_entity_id, 
-                 stop_script_entity_id, 
-                 cover_entity_id, 
-                 send_stop_at_ends, 
-                 always_confident, 
+    def __init__(self,
+                 device_id,
+                 name,
+                 travel_time_down,
+                 travel_time_up,
+                 open_script_entity_id,
+                 close_script_entity_id,
+                 stop_script_entity_id,
+                 cover_entity_id,
+                 send_stop_at_ends,
+                 always_confident,
                  device_class,
                  availability_template):
         """Initialize the cover."""
         self._travel_time_down = travel_time_down
         self._travel_time_up = travel_time_up
         self._open_script_entity_id = open_script_entity_id
-        self._close_script_entity_id = close_script_entity_id 
+        self._close_script_entity_id = close_script_entity_id
         self._stop_script_entity_id = stop_script_entity_id
         self._cover_entity_id = cover_entity_id
         self._send_stop_at_ends = send_stop_at_ends
@@ -259,7 +272,7 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
         if self._travel_time_down is not None:
             attr[CONF_TRAVELLING_TIME_DOWN] = self._travel_time_down
         if self._travel_time_up is not None:
-            attr[CONF_TRAVELLING_TIME_UP] = self._travel_time_up 
+            attr[CONF_TRAVELLING_TIME_UP] = self._travel_time_up
         attr[ATTR_UNCONFIRMED_STATE] = str(self._assume_uncertain_position)
         return attr
 
@@ -289,7 +302,7 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
     def assumed_state(self):
         """Return True unless we have set position with confidence through send_know_position service."""
         return self._assume_uncertain_position
- 
+
     async def async_set_cover_position(self, **kwargs):
        """Move the cover to a specific position."""
        if ATTR_POSITION in kwargs:
